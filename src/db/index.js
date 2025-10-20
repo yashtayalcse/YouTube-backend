@@ -7,7 +7,8 @@ async function ConnectDB(){
     console.log('MongoDB connected at: ',connectionInstance.connection.host);
   } catch (err) {
       console.log("MONGODB connection error: ",err);
-      process.exit(1);
+      throw err; //thrown error is caught by next layer catch
+      // process.exit(1);
   }
 }
 
