@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
 import bcrypt from  "bcrypt"
 
-const UserSchema= new moongoose.Schema(
+const UserSchema = new moongoose.Schema(
   {
     username:{
       type:String,
