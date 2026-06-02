@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
 import bcrypt from  "bcrypt"
 
-const UserSchema = new moongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
     username:{
       type:String,
@@ -37,7 +37,7 @@ const UserSchema = new moongoose.Schema(
     watchhistory:{
       type: Array(
       {
-        type:mongoose.Schema.types.ObjectId,
+        type:mongoose.Schema.Types.ObjectId,
         ref:"Video"
       }
       )
@@ -48,18 +48,17 @@ const UserSchema = new moongoose.Schema(
   },{timestamps:true}
 )
 
-UserSchema.pre("save", async function(next){
-  if(!this.isModified("password"))return next();
+UserSchema.pre("save", async function(){
+  if(!this.isModified("password"))return;
 
   this.password=await bcrypt.hash(this.password,10);
-  next();
 })
 
 UserSchema.methods.isPasswordCorrect = async function (password){
   return await bcrypt.compare(password,this.password); //true or false 
 }
 //accesstoken kee expiry is less, i am not storing it in the userschema
-userSchema.methods.generateAccessToken = function(){
+UserSchema.methods.generateAccessToken = function(){
     return jwt.sign(
         {
             _id: this._id,
@@ -74,7 +73,7 @@ userSchema.methods.generateAccessToken = function(){
     )
 }
 //refresh token expiry is more, i am storing it in the schema.
-userSchema.methods.generateRefreshToken = function(){
+UserSchema.methods.generateRefreshToken = function(){
     return jwt.sign(
         {
             _id: this._id,
@@ -86,5 +85,5 @@ userSchema.methods.generateRefreshToken = function(){
     )
 }
 
-export const User=moongoose.model("User",UserSchema);
+export const User=mongoose.model("User",UserSchema);
 
