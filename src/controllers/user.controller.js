@@ -65,4 +65,74 @@ const registerUser = asyncWrapper(
   }
 )
 
-export {registerUser}
+const loginUser = asyncWrapper(
+  async(req,res)=>{
+    const {email,username, password} = req.body;
+    if(!email && !password){
+      throw new ApiError(401,"Email or username required");
+    }
+    const user = await User.findOne({
+      $or:[{username}, {email}]
+    })
+    if(!user){
+      throw new ApiError(401,"user not found");
+    }
+    const isPasswordCorrect = await user.isPasswordCorrect(password);
+    if(!isPasswordCorrect){
+      throw new ApiError(401,"Incorrect password")
+    }
+    //all credentials are now verified
+    //now generate tokens
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshtoken = refreshToken;
+    await user.save({ validateBeforeSave: false })
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    const loggedInUser = user;
+    loggedInUser.password=undefined;
+    loggedInUser.refreshtoken=undefined;
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+          200, 
+          "User logged In Successfully",
+          {
+            loggedInUser
+          }
+      )
+    )
+  }
+)
+
+const logoutUser = asyncWrapper(
+  async(req,res)=>{
+
+    await User.findByIdAndUpdate(
+      req.user._id,
+      {refreshtoken: null}
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, "User logged Out",{}))
+  }
+)
+
+export {registerUser, loginUser, logoutUser}
