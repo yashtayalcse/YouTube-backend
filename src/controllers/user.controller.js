@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 const registerUser = asyncWrapper( 
   async (req,res)=>{
@@ -135,4 +136,42 @@ const logoutUser = asyncWrapper(
   }
 )
 
-export {registerUser, loginUser, logoutUser}
+const refreshAccessToken = asyncWrapper(
+  async function (req,res){
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers("Authorization")?.replace("Bearer ","");
+
+    if(!incomingRefreshToken){
+      throw new ApiError(401,"unathorized path - refresh token is required")
+    }
+    const decoded = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    const user = await User.findById(decoded._id);
+    if(!user){
+      throw new ApiError(401,"user not found")
+    }
+    if(user.refreshtoken !== incomingRefreshToken){
+      throw new ApiError(401,"invalid refresh token")
+    }
+
+    const newAccessToken = user.generateAccessToken();
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res
+    .status(200)
+    .cookie("accessToken", newAccessToken, options)
+    .json(
+      new ApiResponse(
+          200, 
+          "Access token refreshed successfully",
+          {
+            accessToken: newAccessToken
+          }
+      )
+    )
+  }
+)
+
+export {registerUser, loginUser, logoutUser, refreshAccessToken}
