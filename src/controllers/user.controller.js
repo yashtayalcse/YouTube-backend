@@ -26,7 +26,7 @@ const registerUser = asyncWrapper(
     }
 
     const userFound = await User.findOne({
-      $or: [{username, email}]
+      $or: [{username}, {email}]
     });
 
     if(userFound){
@@ -69,7 +69,7 @@ const registerUser = asyncWrapper(
 const loginUser = asyncWrapper(
   async(req,res)=>{
     const {email,username, password} = req.body;
-    if(!email && !password){
+    if(!email && !username){
       throw new ApiError(401,"Email or username required");
     }
     const user = await User.findOne({
