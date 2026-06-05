@@ -8,7 +8,7 @@ export const verifyJWT = asyncWrapper(
 
     const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","");
     if(!token){
-      throw new ApiError(402,"anauthorized path")
+      throw new ApiError(401,"anauthorized path")
     }
     const decoded=jwt.verify(token,process.env.ACCESS_TOKEN_SECRET)
 

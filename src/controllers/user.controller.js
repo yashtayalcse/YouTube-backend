@@ -68,10 +68,13 @@ const registerUser = asyncWrapper(
 
 const loginUser = asyncWrapper(
   async(req,res)=>{
-    const {email,username, password} = req.body;
+
+    const {email, username, password} = req.body;
+
     if(!email && !username){
       throw new ApiError(401,"Email or username required");
     }
+
     const user = await User.findOne({
       $or:[{username}, {email}]
     })
@@ -174,4 +177,122 @@ const refreshAccessToken = asyncWrapper(
   }
 )
 
-export {registerUser, loginUser, logoutUser, refreshAccessToken}
+const changePassword = asyncWrapper(
+  async function(req,res){
+    const {newPassword, oldPassword, confirmPassword}=req.body;
+    if(!(newPassword.trim()&&oldPassword.trim()&&confirmPassword.trim())){
+      throw new ApiError(401,"All three passwords are required!")
+    }
+    if(newPassword===oldPassword){
+      throw new ApiError(401,"newPassword must be different from old")
+    }
+    if(newPassword!==confirmPassword){
+      throw new ApiError(401,"new and Confirm password must match!")
+    }
+    const user = await User.findById(req.user._id)
+    const isCorrect=await user.isPasswordCorrect(oldPassword);
+    if(!isCorrect){
+      throw new ApiError(401,"old password incorrect!!")
+    }
+    user.password=newPassword;
+    await user.save({validateBeforeSave:false})
+
+    res
+    .status(200)
+    .json(new ApiResponse(200,"password changed"))
+  }
+)
+
+const updateAvatar = asyncWrapper(
+  async function(req,res){
+    const avatarLocalPath = req.file?.path;
+    if(!avatarLocalPath){
+      throw newApiError(401,"new avatar file for update needed")
+    }
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    if(!avatar){
+      throw new ApiError(501,"avatar upload failed")
+    }
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        avatar: avatar.url
+      },
+      {new:true}
+    ).select("-password -refreshtoken")
+
+    res
+    .status(200)
+    .json(new ApiResponse(200,"avatar image updated",user))
+  }
+)
+
+const updateCoverImage = asyncWrapper(
+  async function(req,res){
+    const coverImageLocalPath = req.file?.path;
+    if(!coverImageLocalPath){
+      throw newApiError(401,"new coverImage file for update needed")
+    }
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    if(!coverImage){
+      throw new ApiError(501,"coverImage upload failed")
+    }
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        coverimage: coverImage.url
+      },
+      {new:true}
+    ).select("-password -refreshtoken")
+
+    res
+    .status(200)
+    .json(new ApiResponse(200,"coverImage image updated",user))
+  }
+)
+
+const updateUserDetails = asyncWrapper(
+  async function (req,res) {
+    let {username, fullname, email} = req.body;
+    username = username?.trim().toLowerCase();
+    email = email?.trim().toLowerCase();
+    fullname = fullname?.trim();
+    if(!(username&&fullname&&email)){
+      throw new ApiError(401,"all fields are required!")
+    }
+    const user = await User.findById(req.user._id).select("-password -refreshtoken")
+
+    if(user.username==username&&user.fullname==fullname&&user.email==email){
+      //no update needed
+      return res.status(200).json(new ApiResponse(200,"No update was seen, operation completed successfully"))
+    }
+
+    //check if new usernme or email already exists for some other user
+    const existingUser = await User.findOne({
+      $or: [{username}, {email}],
+      _id: {$ne: req.user._id}
+    })
+
+    if(existingUser){
+      throw new ApiError(400,"Username or email already exists, try with different ones")
+    }
+
+    user.username=username;
+    user.fullname=fullname;
+    user.email=email;
+    user.save({validateBeforeSave:false});
+
+    res.status(200).json(new ApiResponse(200,"User details updated",user))
+  }
+)
+
+export 
+  {registerUser,
+   loginUser, 
+   logoutUser, 
+   refreshAccessToken, 
+   changePassword,
+   updateAvatar,
+   updateCoverImage,
+  updateUserDetails
+  }
