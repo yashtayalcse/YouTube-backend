@@ -5,6 +5,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import {v2 as cloudinary} from "cloudinary";
+import { WatchHistory } from "../models/watchHistory.model.js";
+import mongoose from "mongoose";
 
 const get_publicID_from_cloudinaryUrl = function(url){
   const list= url.split('/');
@@ -401,6 +403,67 @@ const getUserChannelProfile = asyncWrapper(
   }
 )
 
+const getWatchHistory = asyncWrapper(
+  async function(req,res){
+    const userId = req?.user?._id;
+    if(!userId){
+      return res.status(200).json(new ApiResponse(200,"User not loggedIn",{
+        watchHistory: []
+      }))
+    }
+    const watchHistory = await WatchHistory.aggregate([
+      {$match: {user: new mongoose.Types.ObjectId(userId)}},
+      {
+        $lookup: {
+          from: "videos",
+          localField: "video",
+          foreignField: "_id",
+          as: "videoDetails"
+        }
+      },
+      {
+        $unwind: "$videoDetails"
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "videoDetails.owner",
+          foreignField: "_id",
+          as: "ownerDetails"
+        }
+      },
+      {$unwind: "$ownerDetails"},
+      {$set: {"ownerName": "$ownerDetails.username"}},
+      {
+        $project: {
+          _id: 0,  //if id field ko manualyy remove karna hee padta hai
+          watchedAt: 1,
+          ownerName: 1,
+          videoDetails: {
+            thumbnail: 1,
+            title: 1,
+            duration: 1,
+            views: 1,
+            isPublished: 1
+          }, 
+        }
+      },
+      {
+        $replaceWith: {
+          $mergeObjects: ["$videoDetails", "$$ROOT"]
+        }
+      },
+      {$unset: ["videoDetails"]},
+      {
+        $sort: {watchedAt: -1}
+      }
+    ])
+    return res.status(200).json(new ApiResponse(200,"Watch history fetched",{
+      watchHistory
+    })) 
+  }
+)
+
 export 
   {registerUser,
   loginUser, 
@@ -411,5 +474,5 @@ export
   updateCoverImage,
   updateUserDetails,
   getUserChannelProfile,
-
+  getWatchHistory
   }

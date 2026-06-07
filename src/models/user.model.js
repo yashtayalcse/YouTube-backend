@@ -35,14 +35,6 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true,"password is required!!"]
     },
-    watchhistory:{
-      type: Array(
-      {
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"Video"
-      }
-      )
-    },
     refreshtoken:{
       type:String
     }

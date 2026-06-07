@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginUser, logoutUser, registerUser, refreshAccessToken, changePassword, updateAvatar, updateCoverImage, updateUserDetails,getUserChannelProfile } from "../controllers/user.controller.js";
+import { loginUser, logoutUser, registerUser, refreshAccessToken, changePassword, updateAvatar, updateCoverImage, updateUserDetails,getUserChannelProfile, getWatchHistory } from "../controllers/user.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import { optionalAuth } from "../middleware/optionalAuth.middleware.js";
@@ -41,5 +41,7 @@ router.route("/update-details").put(
 )
 
 router.route("/refreshAccessToken").get(refreshAccessToken)
+
+router.route("/watch-history").get(optionalAuth, getWatchHistory) // http://localhost:8000/api/v1/users/watch-history
 
 export default router;
