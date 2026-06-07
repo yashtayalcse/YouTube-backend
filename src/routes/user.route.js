@@ -39,4 +39,6 @@ router.route("/update-details").put(
   updateUserDetails
 )
 
+router.route("/refreshAccessToken").get(refreshAccessToken)
+
 export default router;

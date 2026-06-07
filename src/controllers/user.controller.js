@@ -4,6 +4,13 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import {v2 as cloudinary} from "cloudinary";
+
+const get_publicID_from_cloudinaryUrl = function(url){
+  const list= url.split('/');
+  const id = list[list.length-1].split(".")[0]
+  return id;
+}
 
 const registerUser = asyncWrapper( 
   async (req,res)=>{
@@ -206,19 +213,29 @@ const changePassword = asyncWrapper(
 const updateAvatar = asyncWrapper(
   async function(req,res){
     const avatarLocalPath = req.file?.path;
+    console.log(req.file)
     if(!avatarLocalPath){
-      throw newApiError(401,"new avatar file for update needed")
+      throw new ApiError(403,"new avatar file for update needed")
     }
     const avatar = await uploadOnCloudinary(avatarLocalPath);
+
     if(!avatar){
       throw new ApiError(501,"avatar upload failed")
     }
+
+    // Delete Old avatar file from cloudinary
+    const publicID = get_publicID_from_cloudinaryUrl(req.user.avatar)
+    if(publicID){
+      const deleteOldAvatar=await cloudinary.uploader.destroy(publicID);
+      console.log(deleteOldAvatar);
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
       {
         avatar: avatar.url
       },
-      {new:true}
+      {returnDocument: "after"}
     ).select("-password -refreshtoken")
 
     res
@@ -237,6 +254,14 @@ const updateCoverImage = asyncWrapper(
     if(!coverImage){
       throw new ApiError(501,"coverImage upload failed")
     }
+
+    // Delete Old coverimage file from cloudinary
+    const publicID = get_publicID_from_cloudinaryUrl(req.user.coverimage)
+    if(publicID){
+    const deleteOldcoverimage=await cloudinary.uploader.destroy(publicID);
+    console.log(deleteOldcoverimage);
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
       {
