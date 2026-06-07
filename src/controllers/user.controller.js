@@ -148,7 +148,7 @@ const logoutUser = asyncWrapper(
 
 const refreshAccessToken = asyncWrapper(
   async function (req,res){
-    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers("Authorization")?.replace("Bearer ","");
+    const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers.authorization?.split(" ")[1];
 
     if(!incomingRefreshToken){
       throw new ApiError(401,"unathorized path - refresh token is required")
@@ -311,13 +311,105 @@ const updateUserDetails = asyncWrapper(
   }
 )
 
+const getUserChannelProfile = asyncWrapper(
+  async function (req,res){
+    //username
+    //fullname
+    //avatar
+    //coverimage
+    //subscribers
+    //subscribed
+    //no of videos uploaded
+    //isOwner
+    //if not owner subscibe/subcribed, else send subscribed
+
+    const username = req.params.channelName.toLowerCase().trim();
+
+    if(!username){
+      throw new ApiError(400,"username is required")
+    }
+
+    const channel = await User.aggregate([
+      {$match: {username}},
+
+      {$lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+        }
+      },
+
+      {$lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribed"
+        }
+      },
+
+      {
+        $lookup: {
+          from: "videos",
+          localField: "_id",
+          foreignField: "owner",
+          as: "videos"
+        }
+      },
+
+      {
+        $addFields: {
+            isSubscribed: {
+                $cond: {
+                    if: {$in: [req.user?._id, "$subscribers.subscriber"]},
+                    then: true,
+                    else: false
+                }
+            },
+            noOfVideos: {
+                $size: "$videos"
+            },
+            subscribersCount: {
+                $size: "$subscribers"
+            },
+            subscribedToCount: {
+                $size: "$subscribed"
+            }
+        }
+      },
+
+      {
+        $project: {
+          username: 1,
+          fullname: 1,
+          avatar: 1,
+          coverimage: 1,
+          subscribersCount: 1,
+          subscribedToCount: 1,
+          isSubscribed: 1,
+          noOfVideos: 1,
+        }
+      }
+    ])
+
+    if(!channel.length){
+      throw new ApiError(404,"Channel not found")
+    }
+    req.isOwner = req.user?._id.toString() === channel[0]._id.toString();
+
+    res.status(200).json(new ApiResponse(200,"Channel profile fetched",channel[0]))
+  }
+)
+
 export 
   {registerUser,
-   loginUser, 
-   logoutUser, 
-   refreshAccessToken, 
-   changePassword,
-   updateAvatar,
-   updateCoverImage,
-  updateUserDetails
+  loginUser, 
+  logoutUser, 
+  refreshAccessToken, 
+  changePassword,
+  updateAvatar,
+  updateCoverImage,
+  updateUserDetails,
+  getUserChannelProfile,
+
   }
