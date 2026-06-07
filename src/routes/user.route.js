@@ -42,6 +42,6 @@ router.route("/update-details").put(
 
 router.route("/refreshAccessToken").get(refreshAccessToken)
 
-router.route("/watch-history").get(optionalAuth, getWatchHistory) // http://localhost:8000/api/v1/users/watch-history
+router.route("/history").get(optionalAuth, getWatchHistory) // http://localhost:8000/api/v1/users/watch-history
 
 export default router;
