@@ -2,7 +2,7 @@ import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 
-const app = express()
+const app = express();
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
@@ -16,15 +16,15 @@ app.use(cookieParser())
 
 
 //routes import
-import userRouter from './routes/user.routes.js'
-import healthcheckRouter from "./routes/healthcheck.routes.js"
-import tweetRouter from "./routes/tweet.routes.js"
-import subscriptionRouter from "./routes/subscription.routes.js"
-import videoRouter from "./routes/video.routes.js"
-import commentRouter from "./routes/comment.routes.js"
-import likeRouter from "./routes/like.routes.js"
-import playlistRouter from "./routes/playlist.routes.js"
-import dashboardRouter from "./routes/dashboard.routes.js"
+import userRouter from "./src/routes/user.route.js"
+import healthcheckRouter from "./src/routes/healthcheck.route.js"
+import tweetRouter from "./src/routes/tweet.route.js"
+import subscriptionRouter from "./src/routes/subscription.route.js"
+import videoRouter from "./src/routes/video.route.js"
+import commentRouter from "./src/routes/comment.route.js"
+import likeRouter from "./src/routes/like.route.js"
+import playlistRouter from "./src/routes/playlist.route.js"
+import dashboardRouter from "./src/routes/dashboard.route.js"
 
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
