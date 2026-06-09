@@ -436,10 +436,11 @@ const getWatchHistory = asyncWrapper(
       {$set: {"ownerName": "$ownerDetails.username"}},
       {
         $project: {
-          _id: 0,  //if id field ko manualyy remove karna hee padta hai
+          _id: 0,  
           watchedAt: 1,
           ownerName: 1,
           videoDetails: {
+            _id: 1,
             thumbnail: 1,
             title: 1,
             duration: 1,
