@@ -9,8 +9,11 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 const getAllVideos = asyncWrapper(
     async (req, res) => {
-    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+        //using curson pagination here, as it performs better than skip limit pagination
+    const { limit = 10,cursor, query, sortBy, sortType } = req.query
     //TODO: get all videos based on query, sort, pagination
+    
+
     }
 )
 
