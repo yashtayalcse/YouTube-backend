@@ -25,6 +25,7 @@ import commentRouter from "./src/routes/comment.route.js"
 import likeRouter from "./src/routes/like.route.js"
 import playlistRouter from "./src/routes/playlist.route.js"
 import dashboardRouter from "./src/routes/dashboard.route.js"
+import channelRouter from "./src/routes/channel.route.js"
 
 //routes declaration
 app.use("/api/v1/healthcheck", healthcheckRouter)
@@ -36,6 +37,7 @@ app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
+app.use("/api/v1/channel", channelRouter) // http://localhost:8000/api/v1/channels/:channelName
 
 // http://localhost:8000/api/v1/users/register
 
