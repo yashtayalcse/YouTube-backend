@@ -251,7 +251,7 @@ const deleteVideo = asyncWrapper(async (req, res) => {
 })
 
 const togglePublishStatus = asyncWrapper(async (req, res) => {
-    const { videoId } = req.params
+    const { videoId } = req.params;
     if(!isValidObjectId(videoId?.trim())){
         throw new ApiError(400, "Invalid video id")
     }
