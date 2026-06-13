@@ -475,5 +475,6 @@ export
   updateCoverImage,
   updateUserDetails,
   getUserChannelProfile,
-  getWatchHistory
+  getWatchHistory,
+  get_publicID_from_cloudinaryUrl
   }
