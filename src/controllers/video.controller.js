@@ -175,14 +175,11 @@ const updateVideo = asyncWrapper(async (req, res) => {
     else if(video.owner.toString()!==req.user._id.toString()){
         throw new ApiError(403, "ACCESS DENIED: You are not the owner of this video")
     }
-    const title = req.body.title?.trim();
-    const description = req.body.description?.trim();
-    if(title==="" || description===""){
-        throw new ApiError(400, "title and description cannot be empty")
-    }
+    const title = req.body.title?.trim() || video.title;
+    const description = req.body.description?.trim() || video.description;
 
     const oldThumbnail = video.thumbnail;
-    const newThumbnailLocalPath = req.file?.thumbnail?.path;
+    const newThumbnailLocalPath = req.file?.path;
     const newThumbnail = newThumbnailLocalPath ? await uploadOnCloudinary(newThumbnailLocalPath) : null;
     if(newThumbnailLocalPath && !newThumbnail){
         throw new ApiError(500, "Error in uploading newThumbnail")
@@ -198,7 +195,7 @@ const updateVideo = asyncWrapper(async (req, res) => {
         //delete old thumbnail from cloudinary
         const publicId = get_publicID_from_cloudinaryUrl(oldThumbnail);
         const response= await cloudinary.uploader.destroy(publicId);
-        console.log(response);
+        console.log("Deleted resource",response);
     }
     return res.status(200).json(new ApiResponse(200, "Video updated successfully", updatedVideo));
 })
@@ -251,11 +248,13 @@ const deleteVideo = asyncWrapper(async (req, res) => {
 })
 
 const togglePublishStatus = asyncWrapper(async (req, res) => {
+
     const { videoId } = req.params;
     if(!isValidObjectId(videoId?.trim())){
         throw new ApiError(400, "Invalid video id")
     }
     const video = await Video.findById(videoId.trim());
+
     if(!video){
         throw new ApiError(404, "Video not found")
     }
@@ -267,6 +266,7 @@ const togglePublishStatus = asyncWrapper(async (req, res) => {
     if(!updatedVideo){
         throw new ApiError(500, "Error in updating video publish status")
     }
+
     return res.status(200).json(new ApiResponse(200, "Video publish status toggled successfully", updatedVideo));
 })
 
