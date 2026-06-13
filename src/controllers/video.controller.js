@@ -225,15 +225,12 @@ const deleteVideo = asyncWrapper(async (req, res) => {
         throw new ApiError(500, "Error in deleting video from database")
     }
     //delete comments
-    const comments = await Comment.aggregate(
-        {$match: {
-            video: videoId.trim()
-        }},
-        {$project: {
-            _id:1,
-        }
-        }
-    ).map(comment=>comment._id);
+    const comments = (await Comment.aggregate(
+        [
+        {$match: {video: videoId.trim()}},
+        {$project: {_id:1}}
+        ]
+    )).map(comment=>comment._id);
     await Comment.deleteMany({video: videoId.trim()});
     //delete likes
     await Like.deleteMany(
@@ -247,7 +244,7 @@ const deleteVideo = asyncWrapper(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "Video deleted successfully", deletedVideo));
 })
 
-const togglePublishStatus = asyncWrapper(async (req, res) => {
+const togglePublishStatus = asyncWrapper(async (req, res) => { //protected func
 
     const { videoId } = req.params;
     if(!isValidObjectId(videoId?.trim())){
