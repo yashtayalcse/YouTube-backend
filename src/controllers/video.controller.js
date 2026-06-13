@@ -7,7 +7,7 @@ import asyncWrapper from "../utils/asyncWrapper.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 
 
-const getAllVideos = asyncWrapper(
+const getAllVideos = asyncWrapper( //public function no auth
     async (req, res) => {
         //using cursor pagination here, as it performs better than page skip limit pagination
     let { limit = 5,
@@ -18,7 +18,6 @@ const getAllVideos = asyncWrapper(
     
     const defaultQuery ="technology node jwt job dsa placement ml design";
     const searchQuery = query?.trim().toLowerCase() || defaultQuery;
-    // cursor = cursor ? JSON.parse(cursor) : null;
     limit = Number(limit);
     cursor = cursor ? JSON.parse(cursor) : null;
     const stages = {
@@ -98,9 +97,45 @@ const getAllVideos = asyncWrapper(
     }
 )
 
-const publishAVideo = asyncWrapper(async (req, res) => {
-    const { title, description} = req.body
+const publishAVideo = asyncWrapper(async (req, res) => { //protected function
+    const { title, description, publish} = req.body
     // TODO: get video, upload to cloudinary, create video
+    if(publish && publish!="true" && publish!="false"){
+        throw new ApiError(400, "publish field can only be true or false")
+    }
+    if(!title?.trim()){
+        throw new ApiError(400, "title is required")
+    }
+    if(!description?.trim()){
+        throw new ApiError(400, "description is required")
+    }
+    if(!req.files?.videoFile?.[0] || !req.files?.thumbnail?.[0]){
+        throw new ApiError(400, "videoFile and thumbnail are required")
+    }
+    //upload to cloudinary
+    const videoFileLocalPath = req.files.videoFile[0].path;
+    const thumbnailLocalPath = req.files.thumbnail[0].path;
+    const videoFile = await uploadOnCloudinary(videoFileLocalPath);
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+    if(!videoFile || !thumbnail){
+        throw new ApiError(500, "Error in uploading files")
+    }
+
+    const video = await Video.create(
+        {
+            videoFile: videoFile.secure_url,
+            thumbnail: thumbnail.secure_url,
+            title: title.trim(),
+            description: description.trim(),
+            duration: Number(videoFile.duration.toFixed(2)),
+            owner: req.user._id,
+            isPublished: publish? publish :true,
+        }
+    )
+    if(!video){
+        throw new ApiError(500, "Error in creating video")
+    }
+    return res.status(201).json(new ApiResponse(201, "Video published successfully", video));
 })
 
 const getVideoById = asyncWrapper(async (req, res) => {

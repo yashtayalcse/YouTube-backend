@@ -16,7 +16,8 @@ router
     .route("/")
     .get(getAllVideos)
     .post(
-        upload.fields([
+        verifyJWT,
+        upload.fields([ //ye multer ka middleware, reqbody mein text fields ko populate karega and req.files mein file fields ko populate karega
             {
                 name: "videoFile",
                 maxCount: 1,
